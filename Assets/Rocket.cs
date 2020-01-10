@@ -5,30 +5,43 @@ using UnityEngine;
 
 public class Rocket : MonoBehaviour
 {
+    Rigidbody rigidBody;
+    AudioSource rocketThrust;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        rigidBody = GetComponent<Rigidbody>();
+        rocketThrust = GetComponent<AudioSource>();
     }
-
-    // Update is called once per frame
+ // Update is called once per frame
     void Update()
     {        ProcessInput();
     }
 
     private void ProcessInput()
     {
-        if(Input.GetKey(KeyCode.Space))
+        if(Input.GetKey(KeyCode.Space)) // Can thrust while rotating
         {
-            print("Thrusting");
+            rigidBody.AddRelativeForce(Vector3.up);
+
+            if(!rocketThrust.isPlaying)
+            {
+                rocketThrust.Play();
+            }
         }
-        else if(Input.GetKey(KeyCode.A))
+        else
         {
-            print("Thrusting Left");
+            rocketThrust.Stop();
         }
-        else if (Input.GetKey(KeyCode.D))
+
+        if (Input.GetKey(KeyCode.A))
         {
-            print("Thrusting Right");
+            transform.Rotate(Vector3.forward);
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            transform.Rotate(-Vector3.forward);
         }
     }   
 }

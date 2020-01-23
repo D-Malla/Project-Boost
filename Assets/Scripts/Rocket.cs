@@ -5,6 +5,7 @@ public class Rocket : MonoBehaviour
 {
     [SerializeField] float mainThrust = 100f;
     [SerializeField] float rcsThrust = 100f;
+    [SerializeField] float levelLoadDelay = 2f;
 
     [SerializeField] AudioClip mainEngine;
     [SerializeField] AudioClip completeLevel;
@@ -20,6 +21,7 @@ public class Rocket : MonoBehaviour
     enum State { Alive, Dying, Transcending }
     State state = State.Alive;
 
+    bool collisionsDisabled = false;
 
     // Start is called before the first frame update
     void Start()
@@ -34,11 +36,29 @@ public class Rocket : MonoBehaviour
         {
             RespondToThrustInput();            RespondToRotateInput();
         }
+
+        if(Debug.isDebugBuild)
+        {
+            RespondToDebugKeys();
+        }
+    }
+
+    private void RespondToDebugKeys()
+    {
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            LoadNextLevel();
+        }
+        else if(Input.GetKeyDown(KeyCode.C))
+        {
+            collisionsDisabled = !collisionsDisabled; // Toggle collision
+
+        }
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        if (state != State.Alive) { return; } // Ignore collisions when dead
+        if (state != State.Alive || collisionsDisabled) { return; }
 
         switch (collision.gameObject.tag)
         {
@@ -63,7 +83,7 @@ public class Rocket : MonoBehaviour
         audioSource.Stop();
         audioSource.PlayOneShot(completeLevel);
         completeLevelParticles.Play();
-        Invoke("LoadNextLevel", 1f); // Parameterise time
+        Invoke("LoadNextLevel", levelLoadDelay);
     }
 
     private void StartDeathSequence()
@@ -73,7 +93,7 @@ public class Rocket : MonoBehaviour
         audioSource.Stop();
         audioSource.PlayOneShot(failLevel);
         failLevelParticles.Play();
-        Invoke("LoadFirstLevel", 1f);  // Parameterise time
+        Invoke("LoadFirstLevel", levelLoadDelay);
     }
 
     private void LoadFirstLevel()
@@ -83,7 +103,15 @@ public class Rocket : MonoBehaviour
 
     private void LoadNextLevel()
     {
-        SceneManager.LoadScene(1); // TODO Allow for more than two levels
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        int NextSceneIndex = currentSceneIndex + 1;
+
+        if(NextSceneIndex == SceneManager.sceneCountInBuildSettings)
+        {
+            LoadFirstLevel();
+        }
+
+        SceneManager.LoadScene(NextSceneIndex);
     }
 
     private void RespondToThrustInput()
